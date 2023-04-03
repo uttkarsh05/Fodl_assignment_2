@@ -100,8 +100,133 @@ y_train = np.load('y_train.npy')
 X_train,X_val,y_train,y_val = train_test_split(X_train,y_train,test_size=0.2,random_state=42)
 
 
+class Model(nn.Module):
+    def __init__(self,input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding = 0,stride = 1,max_pool = 'Half',dropout = 0):
+        
+        super.__init__()
+        
+        self.input_size = input_size
+        
+        self.input_dim = input_dim
+        self.out_dim = out_dim
+        
+        self.filter_sizes = filter_sizes
+        self.feature_maps = feature_maps
+        
+        self.activation =  self._get_activation(activation)
+        self.max_pool = max_pool
+        
+        self.padding = padding
+        self.stride = stride
+        
+        self.hidden_layers = hidden_layers
+        self.hidden_size = hidden_size
+        
+        self.droppout = dropout
+        
+        self.flatten_layer = self._get_flatten_layer_size()
+        
+        self.network = self._create_network()
+    
+    def forward(self,X):
+        return self.network(X)
+        
+        
+    
+        
+        
+    def _get_flatten_layer_size(self):
+        
+        N = self.input_size
+        P = self.padding
+        S = self.stride
+        O = 0
+        
+        for i in range(len(self.filter_sizes)):
+            
+            F = self.filter_sizes[i]
+            
+            O = ((N-F+2*P)/(S)) + 1
+            O = O//2
+            
+            N = O
+            
+        out_channels = self.feature_maps[-1]
+        
+        N = out_channels*N*N
+        
+        return N
+    
+  
+
+        
+            
+        
+        
+        
+    def _get_activation(self,activation):
+        if activation.lower() =='relu':
+            g = nn.Relu()
+        
+        if activation.lower() == 'tanh':
+            g = nn.Tanh()
+        
+        return g
+            
+            
+
+    
+    def _create_network(self):
+        
+        network = nn.Sequential()
+        in_channels = self.input_dim
+        pad = self.padding
+        stride = self.stride
+        
+        for i in range(len(self.filter_sizes)):
+            
+            k = self.filter_sizes[i]
+            out_channels = self.feature_maps[i]
+            
+            
+            network.add(nn.Conv2d(in_channels,out_channels,kernel_size = k , padding = pad , stride = stride))
+            network.add(self.activation)
+            network.add(nn.MaxPool2d(kernel_size = 2, stride = 2))
+            
+            in_dim = out_channels
+        
+        network.add(nn.Flatten())
+        
+        in_dim = self.flatten_layer
+        
+        for i in range(len(self.hidden_layers)):
+            
+            hidden_size = self.hidden_size[i]
+            
+            network.add(nn.Linear(in_dim,hidden_size))
+            network.add(self.activation)
+            
+            in_dim = hidden_size
+        
+        network.add(nn.Linear(in_dim,self.out_dim))
+        network.add(nn.LogSoftmax(dim=-1))
+        
+        return network
+            
+        
+        
+        
+        
+        
+            
+        
+        
+        
+        
 
 
+def create_model(filter_sizes,filter_no,activation):
+    
 
 
 
