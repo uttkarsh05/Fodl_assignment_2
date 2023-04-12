@@ -47,3 +47,41 @@ def preprocess(data_dir = 'data',img_size = 128):
     class_names = image_datasets['val'].classes
     
     return test_dataset,class_names
+
+def test(config = default_config,mod=None):
+    
+    device = config.device
+    img_size = 128
+    test_dataset , class_names = preprocess(data_dir=config.data_dir,img_size=img_size)
+    test_dataloader = DataLoader(test_dataset,batch_size=100)
+    if mod is None:
+        model = train()
+        model = model.to(device)
+    else:
+        model = mod
+        model = model.to(device)
+    
+    
+    test_accuracy = 0
+    model.eval()
+    start = time.time()
+    for x , test_labels in test_dataloader:
+        x = x.to(device)
+        test_labels = test_labels.to(device)
+        
+        outputs = model(x)
+        _,preds = torch.max(outputs,1)
+        test_accuracy += torch.sum(preds==test_labels)
+        
+    end = time.time()
+    
+    test_accuracy = test_accuracy/len(test_dataset)
+    test_accuracy = test_accuracy.cpu().numpy()
+    
+    print('-------------------------------')
+    print('test accuracy = ',np.round(test_accuracy,4))
+    
+    time_elapsed = start - end
+    
+    print('Prediction complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    
