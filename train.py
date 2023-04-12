@@ -444,14 +444,26 @@ def train(config = default_config):
         train_accuracy = train_accuracy.cpu().numpy()
         
         val_accuracy = 0
-        batches = int(X_val.shape[0]/100)
-        for k in range(batches):
-            val = X_val[k*100:k*100+100]
-            y_pred = model.predict(val)
-            acc = torch.sum(val_labels[k*100:k*100+100]==y_pred)/100
-            val_accuracy += acc.cpu().numpy()
+        val_loss = 0
+        
+        # validation loop 
+        for x_val,val_labels in val_loader:
+            x_val = x_val.to(device)
+            val_labels = val_labels.to(device)
+            x_val = x_val.view(x_val.shape[0],input_dim,img_size,img_size)
+            outputs = network.forward(x_val)
+            _ , preds = torch.max(outputs,1)
+            loss = loss_function(outputs,val_labels)
             
-        val_accuracy = val_accuracy/batches
+            val_loss += loss.item()*x_val.size(0)
+            val_accuracy+= torch.sum(preds == val_labels)
+        
+        
+        # calculating validation loss and validation accuracy after every epoch     
+        val_loss = val_loss/len(val_dataset)
+        
+        val_accuracy = val_accuracy/len(val_dataset)
+        val_accuracy = val_accuracy.cpu().numpy()
             
         
         
