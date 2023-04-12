@@ -415,23 +415,33 @@ def train(config = default_config):
     start = time.time()
     
     for i in range(epochs):
-        j = 0
-        for (x,y) in train_dataloader:
-            #print('iteration no = ',j+1)
+        train_loss = 0
+        train_accuracy = 0
+        
+        # training loop 
+        for (x,labels) in train_dataloader:
             
-            x = x.view(x.shape[0],input_dim,input_size,input_size)
+            x = x.to(device)
+            labels = labels.to(device)
+            
+            x = x.view(x.shape[0],input_dim,img_size,img_size)
+            
+            outputs = network.forward(x)
+            _ , preds = torch.max(outputs,1)
+            loss = loss_function(outputs,labels)
             
             optimizer.zero_grad()
-            
-            y_hat = network.forward(x)
-            
-            loss = loss_function(y_hat,y)
-            
             loss.backward()
-            
             optimizer.step()
-            
-            j+=1
+
+            train_loss += loss.item()*x.size(0)
+            train_accuracy += torch.sum(preds==labels)
+        
+        # calculating training loss and training accuracy after every epoch 
+        train_loss = train_loss/len(train_dataset)
+        
+        train_accuracy = train_accuracy/len(train_dataset)
+        train_accuracy = train_accuracy.cpu().numpy()
         
         val_accuracy = 0
         batches = int(X_val.shape[0]/100)
