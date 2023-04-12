@@ -153,3 +153,137 @@ def preprocess_data(data_dir = 'data' , img_size = 224 ):
     
     return train_dataset,val_dataset,test_dataset,class_names
 
+def train(config = default_config):
+    
+    #run  = wandb.init(project = config.wandb_project , entity = config.wandb_entity,config = config )
+    
+    #config = wandb.config
+    
+    device = torch.device(config.device)
+    
+    model = config.model
+    network = get_model(model,weights = "DEFAULT")
+    weights = get_model_weights(model)
+    param = next(iter(weights))
+    c = param.transforms()
+    img_size = c.crop_size[0]
+    data_dir = config.data_dir
+    
+    train_dataset , val_dataset , test_dataset , class_names = preprocess_data(img_size=img_size,data_dir=data_dir)
+    
+    val_loader = DataLoader(val_dataset,batch_size=100 )
+    
+    input_dim = config.input_dim
+    out_dim  = config.out_dim
+    
+    #name = '_lr_'+str(config.learning_rate)+'_o_'+str(config.optimizer)+'_bs_'+str(config.batch_size)+'_m_'+str(model)
+    #run.name = name
+    
+    for param in network.parameters():
+        param.requires_grad = False
+
+    # Parameters of newly constructed modules have requires_grad=True by default
+    num_ftrs = network.fc.in_features
+    network.fc = nn.Linear(num_ftrs, out_dim)
+    
+    network = network.to(device)
+    
+    loss_function = get_loss(config.loss).to(device)
+    
+    lr = config.learning_rate
+    momentum = config.momentum
+    beta = config.beta
+    beta1 = config.beta1
+    beta2 = config.beta2
+    
+    weight_decay = config.weight_decay
+    
+    optimizer = get_optimizer(config.optimizer,lr,momentum,beta,beta1,beta2,network,weight_decay)
+    
+    epochs = config.epochs
+    
+    batch_size = config.batch_size 
+    
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    
+    best_model_wts = copy.deepcopy(network.state_dict())
+    best_acc = 0.0
+    
+    early_stopper = EarlyStopper(patience=2,min_delta=0.01)
+    start = time.time()
+    for i in range(epochs):
+        
+        train_loss = 0
+        train_accuracy = 0
+        
+        # training loop 
+        network.train()
+        for (x,labels) in train_dataloader:
+            
+            x = x.to(device)
+            labels = labels.to(device)
+            
+            x = x.view(x.shape[0],input_dim,img_size,img_size)
+            
+            outputs = network(x)
+            _ , preds = torch.max(outputs,1)
+            loss = loss_function(outputs,labels)
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()*x.size(0)
+            train_accuracy += torch.sum(preds==labels)
+        
+        # calculating training loss and training accuracy after every epoch 
+        train_loss = train_loss/len(train_dataset)
+        
+        train_accuracy = train_accuracy/len(train_dataset)
+        train_accuracy = train_accuracy.cpu().numpy()
+        
+        val_accuracy = 0
+        val_loss = 0
+        
+        # validation loop
+        network.eval() 
+        for x_val,val_labels in val_loader:
+            x_val = x_val.to(device)
+            val_labels = val_labels.to(device)
+            x_val = x_val.view(x_val.shape[0],input_dim,img_size,img_size)
+            outputs = network(x_val)
+            _ , preds = torch.max(outputs,1)
+            loss = loss_function(outputs,val_labels)
+            
+            val_loss += loss.item()*x_val.size(0)
+            val_accuracy+= torch.sum(preds == val_labels)
+        
+        
+        # calculating validation loss and validation accuracy after every epoch     
+        val_loss = val_loss/len(val_dataset)
+        
+        val_accuracy = val_accuracy/len(val_dataset)
+        val_accuracy = val_accuracy.cpu().numpy()
+        
+        if val_accuracy>best_acc:
+            best_acc = val_accuracy
+            best_model_wts = copy.deepcopy(network.state_dict())
+
+        print('epoch = ',i+1, ' training loss = ',np.round(train_loss,4),' training accuracy = ',np.round(train_accuracy,4)*100,' validation loss = ',np.round(val_loss,4),' val accuracy = ', np.round(val_accuracy,4)*100)
+        
+        #wandb.log({'epochs':i+1,'training_loss':np.round(train_loss,4),'training_accuracy':np.round(train_accuracy,4)*100,'validation_loss':np.round(val_loss,4),'val_accuracy':np.round(val_accuracy,4)*100})
+
+        if early_stopper.early_stop(val_accuracy):
+            break
+            
+    end = time.time()
+    time_elapsed = start - end
+    print('Training complete in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+    
+    #loading the best model weights 
+    network.load_state_dict(best_model_wts)
+    
+    #returning the best model
+    return network
