@@ -13,7 +13,6 @@ import copy
 import time
 from types import SimpleNamespace
 
-
 default_config = SimpleNamespace(
 	wandb_project = 'sweeps',
 	wandb_entity = 'uttakarsh05',
@@ -48,6 +47,7 @@ default_config = SimpleNamespace(
     data_dir = 'data',
     device = 'mps'
 )
+
 
 def parse_args():
 	argparser = argparse.ArgumentParser(description = 'Processing Hyperparameters')
@@ -87,6 +87,9 @@ def parse_args():
 	vars(default_config).update(vars(args))
 	return 
 
+
+
+# loading and creating train validation and test datasets
 def preprocess_data(data_dir = 'data' , img_size = 128 ):
     
     # path to the data folder from the current directory
@@ -130,6 +133,8 @@ def preprocess_data(data_dir = 'data' , img_size = 128 ):
     
     return train_dataset,val_dataset,test_dataset,class_names
 
+
+
 class EarlyStopper:
     def __init__(self, patience=2, min_delta=0.01):
         self.patience = patience
@@ -146,8 +151,9 @@ class EarlyStopper:
             if self.counter >= self.patience:
                 return True
         return False
-
-
+    
+    
+    
 class Model(nn.Module):
     
     def __init__(self,input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding = 0,stride = 1,filter_orientation = 'Half',dropout = 0,batch_norm = True):
@@ -291,11 +297,7 @@ class Model(nn.Module):
         
         return network
             
-        
-        
-        
-        
-        
+       
 def get_loss(loss):
     if loss.lower() =='crossentropy':
         loss_function = nn.CrossEntropyLoss()
@@ -326,7 +328,6 @@ def get_optimizer(optimizer,lr,momentum,beta,beta1,beta2,network,weight_decay):
         opt = optim.RMSprop(network.parameters(),lr = lr ,weight_decay=weight_decay)
     
     return opt
-
 
 def train(config = default_config):
     
@@ -413,8 +414,9 @@ def train(config = default_config):
     early_stopper = EarlyStopper(patience=patience,min_delta=min_delta)
     
     start = time.time()
-    
     for i in range(epochs):
+        
+        
         train_loss = 0
         train_accuracy = 0
         
@@ -488,16 +490,12 @@ def train(config = default_config):
     
     #returning the best m
     return network
-            
-
-
- 
     
-    
-    
+      
 
 
 
 if __name__ == "__main__":
     parse_args()
-    train(default_config)
+    model = train(default_config)
+
