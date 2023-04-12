@@ -12,8 +12,10 @@ import argparse
 import copy
 import time
 import torchvision.models as models 
-from torchvision.models import list_models , get_model , get_model_weightsfrom types import SimpleNamespace
+from torchvision.models import list_models , get_model , get_model_weights
 from types import SimpleNamespace
+
+
 
 default_config = SimpleNamespace(
 	wandb_project = 'sweeps',
@@ -36,6 +38,7 @@ default_config = SimpleNamespace(
     data_dir = 'data',
     device = 'mps'
 )
+
 
 def parse_args():
 	argparser = argparse.ArgumentParser(description = 'Processing Hyperparameters')
@@ -61,6 +64,7 @@ def parse_args():
 	args = argparser.parse_args()
 	vars(default_config).update(vars(args))
 	return 
+
 class EarlyStopper:
     def __init__(self, patience=2, min_delta=0.01):
         self.patience = patience
@@ -152,6 +156,8 @@ def preprocess_data(data_dir = 'data' , img_size = 224 ):
     class_names = image_datasets['train'].classes
     
     return train_dataset,val_dataset,test_dataset,class_names
+
+
 
 def train(config = default_config):
     
@@ -287,3 +293,9 @@ def train(config = default_config):
     
     #returning the best model
     return network
+    
+      
+
+if __name__ == '__main__':
+    parse_args()
+    model = train(default_config)
