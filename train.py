@@ -87,53 +87,49 @@ def parse_args():
 	vars(default_config).update(vars(args))
 	return 
 
-# Define the labels for the Simpsons characters we're detecting
-class_names = {0:'Amphibia', 1:'Animalia', 2:'Arachnida',3: 'Aves',4: 'Fungi',5: 'Insecta', 6:'Mammalia', 7:'Mollusca', 8:'Plantae',9: 'Reptilia'}
-num_classes = 10
-img_size = 128
-dir = 'data/train'
+def preprocess_data(data_dir = 'data' , img_size = 128 ):
+    
+    # path to the data folder from the current directory
+    data_dir = data_dir
 
-# Load training data
-'''X_train = []
-y_train = []
-for label, name in class_names.items():
-   list_images = os.listdir(dir+'/'+name)
-   for image_name in list_images:
-       image = imageio.imread(dir+'/'+name+'/'+image_name)
-       if np.ndim(image) == 3:
-          X_train.append(cv2.resize(image, (img_size,img_size)))
-          y_train.append(label)
-print(X_train[0].shape)
-        
-np.save('X_train',np.array(X_train))
-np.save('y_train',np.array(y_train))'''
+    mean = np.array([0.5, 0.5, 0.5])
+    std = np.array([0.25, 0.25, 0.25])
 
+    #size of image to be resized to
+    img_size = img_size
 
-device = torch.device("mps")
-X_train = np.load('X_train.npy')
-y = np.load('y_train.npy')
-X_train = X_train.reshape(X_train.shape[0],3,128,128)
+    #transformation to be performed on training an test images
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.Resize((img_size,img_size)),
+            #transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize((img_size,img_size)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+    }
 
-y_train = np.zeros((y.size,y.max()+1))
-y_train[np.arange(y.size),y]=1
+    # creating datasets dictionary from train and validation folders in data directory
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
+                                            data_transforms[x])
+                    for x in ['train', 'val']}
 
-X_train,X_val,y_train,y_val = train_test_split(X_train,y_train,test_size=0.2,random_state=42)
+    # splitting train dataset into train and validation dataset with random split of size [0.8,0.2]
+    train_size = int(0.8 * len(image_datasets['train']))
+    test_size = len(image_datasets['train']) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(image_datasets['train'], [train_size, test_size])
 
-def normalize(X):
-    mean = np.mean(X,axis =(1,2),keepdims=True)
-    std = np.std(X,axis=(1,2),keepdims=True)
-    X = (X-mean)/std
-    return X
+    test_dataset =  image_datasets['val']
 
-X_train = normalize(X_train)
-X_val = normalize(X_val)
+    # class names 
+    class_names = image_datasets['train'].classes
+    
+    return train_dataset,val_dataset,test_dataset,class_names
 
-X_train = torch.tensor(X_train).float().to(device)
-y_train = torch.tensor(y_train).float().to(device)
-X_val = torch.tensor(X_val).float().to(device)
-y_val = torch.tensor(y_val).float().to(device)
-val_labels = y_val.argmax(1)
-train_dataset = TensorDataset(X_train, y_train)
 
 
 
