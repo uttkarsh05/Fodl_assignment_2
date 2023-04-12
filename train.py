@@ -149,7 +149,8 @@ class EarlyStopper:
 
 
 class Model(nn.Module):
-    def __init__(self,input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding = 0,stride = 1,max_pool = 'Half',dropout = 0,batch_norm = True):
+    
+    def __init__(self,input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding = 0,stride = 1,filter_orientation = 'Half',dropout = 0,batch_norm = True):
         
         super().__init__()
         
@@ -162,7 +163,7 @@ class Model(nn.Module):
         self.feature_maps = feature_maps
         
         self.activation =  self._get_activation(activation)
-        self.max_pool = max_pool
+        self.filter_orientation = filter_orientation
         
         self.padding = padding
         self.stride = stride
@@ -170,13 +171,13 @@ class Model(nn.Module):
         self.hidden_layers = hidden_layers
         self.hidden_size = hidden_size
         
-        self.droppout = dropout
+        self.dropout = dropout
         self.batch_norm = batch_norm
         
         self.flatten_layer = self._get_flatten_layer_size()
         
         self.network = self._create_network()
-    
+        
     def forward(self,X):
         return self.network(X)
     
@@ -184,13 +185,7 @@ class Model(nn.Module):
         y_pred = self.network(X)
         y_hat = y_pred.argmax(1)
         return y_hat
-    
-    
-        
-        
-    
-        
-        
+           
     def _get_flatten_layer_size(self):
         
         N = self.input_size
@@ -212,29 +207,37 @@ class Model(nn.Module):
         N = out_channels*N*N
         
         return int(N)
-    
-  
-
-        
-            
-        
-        
-        
+       
     def _get_activation(self,activation):
-        if activation.lower() =='relu':
+        activation  = activation.lower()
+        if activation =='relu':
             g = nn.ReLU()
         
-        if activation.lower() == 'tanh':
+        elif activation == 'tanh':
             g = nn.Tanh()
         
+        elif activation == 'silu':
+            g = nn.SiLU()
+            
+        elif activation == 'gelu':
+            g = nn.GELU()
+        
+        elif activation =='celu':
+            g = nn.CELU()
+            
+        elif activation == 'leakyrelu':
+            g = nn.LeakyReLU()
+        
+        elif activation == 'elu':
+            g = nn.ELU()
+        
+        elif activation =='selu':
+            g = nn.SELU() 
+       
         return g
-            
-            
 
-    
     def _create_network(self):
-        
-        
+     
         network = []
         in_channels = self.input_dim
         pad = self.padding
@@ -245,13 +248,18 @@ class Model(nn.Module):
             k = self.filter_sizes[i]
             out_channels = self.feature_maps[i]
             
-            
+            #Convolutional layer
             network.append(nn.Conv2d(in_channels,out_channels,kernel_size = k , padding = pad , stride = stride))
-        
+            
+            #Activation
             network.append(self.activation)
+            
+            
+            #Batch normalization
             if self.batch_norm:
                 network.append(nn.BatchNorm2d(num_features=out_channels))
             
+            #Max Pool layer
             network.append(nn.MaxPool2d(kernel_size = 2, stride = 2))
             
             in_channels = out_channels
@@ -259,17 +267,19 @@ class Model(nn.Module):
         network.append(nn.Flatten())
         
         in_dim = self.flatten_layer
-        if self.batch_norm:
-            network.append(nn.BatchNorm1d(num_features=in_dim))
-        
+                
         for i in range(self.hidden_layers):
             
             hidden_size = int(self.hidden_size[i])
             
             network.append(nn.Linear(in_dim,hidden_size))
             network.append(self.activation)
+            
+            network.append(nn.Dropout(self.dropout))
+            
             if self.batch_norm:
                 network.append(nn.BatchNorm1d(num_features=hidden_size))
+            
             
             
             in_dim = hidden_size
