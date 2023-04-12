@@ -334,29 +334,55 @@ def train(config = default_config):
     
     config = wandb.config
     
-    input_size  = config.input_size
+    device = torch.device(config.device)
+    
+    img_size  = config.input_size
+    data_dir = config.data_dir
+    
+    train_dataset , val_dataset , test_dataset , class_names = preprocess_data(img_size=img_size,data_dir=data_dir)
+    
+    val_loader = DataLoader(val_dataset,batch_size=100 )
     
     input_dim = config.input_dim
     out_dim  = config.out_dim
     
     activation = config.activation
     
-    filter_sizes = config.filter_sizes
-    feature_maps = config.feature_maps
+    no_cnn = config.no_cnn
+    filter_sizes = [config.filter_sizes for i in range(no_cnn)]
+    feature_maps = []
+    maps = config.feature_maps
+    filter_orientation = config.filter_orientation.lower()
+    
+    for i in range(no_cnn):
+        feature_maps.append(maps)
+        if filter_orientation=='half':
+            maps = maps//2
+        elif filter_orientation =='same':
+            maps = maps
+        elif filter_orientation=='double':
+            maps = 2*maps
+    
     
     padding = config.padding
     stride  = config.stride
     
     dropout = config.dropout
-    max_pool = config.max_pool
-    batch_norm = config.batch_norm
+    
+    if config.batch_norm.lower()=='false':
+        batch_norm = False
+    elif config.batch_norm.lower()=='true':
+        batch_norm = True
+    
     
     
     hidden_layers = config.hidden_layers
-    hidden_size = config.hidden_size
+    hidden_size = [config.hidden_size for i in range(hidden_layers)]
     
     
-    model = Model(input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding,stride,max_pool ,dropout)
+    name = 'cnn_'+ str(no_cnn) + '_fm_'+str(config.feature_maps)+'_fo_'+str(config.filter_orientation)+'_hs_'+str(config.hidden_size)+'_hl_'+str(config.hidden_layers)+'_lr_'+str(config.learning_rate)+'_o_'+str(config.optimizer)+'_a_'+str(config.activation)+'_bs_'+str(config.batch_size)+'_d_'+str(config.dropout)
+    run.name = name
+    model = Model(img_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding,stride,filter_orientation ,dropout,batch_norm)
     
     network = model.network
     network = network.to(device)
