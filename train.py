@@ -464,12 +464,31 @@ def train(config = default_config):
         
         val_accuracy = val_accuracy/len(val_dataset)
         val_accuracy = val_accuracy.cpu().numpy()
+        
+        if val_accuracy>best_acc:
+            best_acc = val_accuracy
+            best_model_wts = copy.deepcopy(network.state_dict())
+
+        print('epoch = ',i+1, ' training loss = ',np.round(train_loss,4),' training accuracy = ',np.round(train_accuracy,4)*100,' validation loss = ',np.round(val_loss,4),' val accuracy = ', np.round(val_accuracy,4)*100)
+        
+        wandb.log({'epochs':i+1,'training_loss':np.round(train_loss,4),'training_accuracy':np.round(train_accuracy,4)*100,'validation_loss':np.round(val_loss,4),'val_accuracy':np.round(val_accuracy,4)*100})
+
+        if early_stopper.early_stop(val_accuracy):
+            break
             
-        
-        
-        
-        print('epoch = ',i+1, ' training loss = ',loss.item(),' val accuracy = ', np.round(val_accuracy,4)*100)
-        wandb.log({'epochs':i+1,'training_loss':loss.item(),'val_accuracy':np.round(val_accuracy,4)*100})
+    end = time.time()
+    time_elapsed = start - end
+    
+    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+    
+    #loading the best model weights 
+    network.load_state_dict(best_model_wts)
+    torch.save(network.state_dict(),'best_model.pth')
+    
+    #returning the best m
+    return network
+            
 
 
  
