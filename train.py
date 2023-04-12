@@ -17,11 +17,11 @@ from types import SimpleNamespace
 default_config = SimpleNamespace(
 	wandb_project = 'sweeps',
 	wandb_entity = 'uttakarsh05',
-	epochs = 8,
+	epochs = 10,
 	batch_size = 64,
 	loss = 'crossentropy',
 	optimizer = 'adam',
-	learning_rate = 1e-2,
+	learning_rate = 1e-3,
 	momentum = 0.9,
 	beta = 0.9,
 	beta1 = 0.9,
@@ -31,18 +31,22 @@ default_config = SimpleNamespace(
 	weight_initialization = 'He',
 	input_size = 128,
 	input_dim = 3,
-	out_dim = 10 , 
-	filter_sizes = [3,3,3],
-	feature_maps = [64,64,64],
+	out_dim = 10 ,
+    no_cnn = 4,
+	filter_sizes = 3,
+	feature_maps = 64,
 	padding = 0,
 	stride = 1,
-	dropout = 0,
-	max_pool = 'Half',
-	num_layers = 1,
+	dropout = 0.2,
+	filter_orientation = 'double',
 	hidden_layers = 1 ,
-	hidden_size = [64],
-	activation = 'relu',
-    batch_norm = True,
+	hidden_size = 64,
+	activation = 'elu',
+    batch_norm = 'True',
+    patience = 2,
+    min_delta = 0.005,
+    data_dir = 'data',
+    device = 'mps'
 )
 
 def parse_args():
@@ -60,20 +64,25 @@ def parse_args():
 	argparser.add_argument('-beta2','--beta2',type = float,default = default_config.beta2,help = 'beta2 used by adam and nadam')
 	argparser.add_argument('-eps','--epsilon',type = float,default = default_config.epsilon,help = 'epsilon value used by optimizers')
 	argparser.add_argument('-w_d','--weight_decay',type = float,default = default_config.weight_decay,help = 'weight decay (lamda) value for l2 regularization')
-	argparser.add_argument('-fs','--filter_sizes', type = list , default = default_config.filter_sizes,help = 'kernel sizes for every convolutional layer')
-	argparser.add_argument('-fm','--feature_maps', type = list , default = default_config.feature_maps,help = 'list of no of feature maps in a convoutional layer')
-	argparser.add_argument('-mp','--max_pool',type = str , default = default_config.max_pool , help = 'configuration of max pool layer')
+	argparser.add_argument('-cnn','--no_cnn', type = int , default = default_config.no_cnn,help = 'no of cnn layers')
+	argparser.add_argument('-fs','--filter_sizes', type = int , default = default_config.filter_sizes,help = 'kernel sizes for every convolutional layer')
+	argparser.add_argument('-fm','--feature_maps', type = int , default = default_config.feature_maps,help = 'starting no of feature maps in a convoutional layer')
+	argparser.add_argument('-fo','--filter_orientation',type = str , default = default_config.filter_orientation , help = 'how no of feature maps increase or decrease')
 	argparser.add_argument('-ins','--input_size',type = int, default = default_config.input_size , help = 'resolution of input image')
 	argparser.add_argument('-ind','--input_dim',type = int, default = default_config.input_dim , help = 'no of channels in the input image')
 	argparser.add_argument('-outd','--out_dim',type = int, default = default_config.out_dim , help = 'no of classes for the classification task')
 	argparser.add_argument('-str','--stride',type = int , default = default_config.stride, help = 'stride values for the kernel in the convolutional layers')
 	argparser.add_argument('-pad','--padding',type = int , default = default_config.padding, help = 'padding values for the convolutional layers')
-	argparser.add_argument('-hs','--hidden_size',type = list,default = default_config.hidden_size,help = 'list of number of hidden layers')
+	argparser.add_argument('-hs','--hidden_size',type = int,default = default_config.hidden_size,help = 'list of number of hidden layers')
 	argparser.add_argument('-a','--activation',type = str,default = default_config.activation,help = 'activation name')
 	argparser.add_argument('-d','--dropout',type = float,default = default_config.dropout,help = 'probability of a neuron to be dropped')
 	argparser.add_argument('-w_i','--weight_init',type = str,default = default_config.weight_initialization,help = 'activation name')
-	argparser.add_argument('-bn','--batch_norm',type=bool , default=default_config.batch_norm, help='batch normalization after every layer')
+	argparser.add_argument('-b_n','--batch_norm',type=str , default=default_config.batch_norm, help='batch normalization after every layer')
 	argparser.add_argument('-hl','--hidden_layers',type=int , default=default_config.hidden_layers, help='no of hidden layers in feed forward layer')
+	argparser.add_argument('-p','--patience',type=int , default=default_config.patience, help='size of early stopping window')
+	argparser.add_argument('-m_d','--min_delta',type=int , default=default_config.min_delta, help='minimum value allowed from the min validation accuracy')
+	argparser.add_argument('-d_dir','--data_dur',type=str , default=default_config.data_dir, help='path to the data folder')
+	argparser.add_argument('-dev','--device',type=str , default=default_config.device, help='device used for training the model') 
 	args = argparser.parse_args()
 	vars(default_config).update(vars(args))
 	return 
