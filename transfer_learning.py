@@ -61,3 +61,95 @@ def parse_args():
 	args = argparser.parse_args()
 	vars(default_config).update(vars(args))
 	return 
+class EarlyStopper:
+    def __init__(self, patience=2, min_delta=0.01):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_accuracy = 0
+
+    def early_stop(self, validation_accuracy):
+        if validation_accuracy > self.min_validation_accuracy:
+            self.min_validation_accuracy = validation_accuracy
+            self.counter = 0
+        elif validation_accuracy < (self.min_validation_accuracy - self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+    
+def get_loss(loss):
+    if loss.lower() =='crossentropy':
+        loss_function = nn.CrossEntropyLoss()
+    elif loss.lower()=='mse':
+        loss_function = nn.MSELoss()
+    
+    return loss_function
+        
+def get_optimizer(optimizer,lr,momentum,beta,beta1,beta2,network,weight_decay):
+    optimizer = optimizer.lower()
+    
+    if optimizer=='sgd':
+        opt = optim.SGD(network.parameters(),lr = lr ,weight_decay=weight_decay)
+    
+    elif optimizer=='momentum':
+        opt = optim.SGD(network.parameters(),lr = lr,momentum = momentum ,weight_decay=weight_decay)
+    
+    elif optimizer=='nesterov':
+        opt = optim.SGD(network.parameters(),lr = lr , momentum = beta,weight_decay=weight_decay)
+    
+    elif optimizer == 'adam':
+        opt = optim.Adam(network.parameters(),lr = lr , betas = (beta1,beta2),weight_decay=weight_decay)
+    
+    elif optimizer == 'nadam':
+        opt = optim.NAdam(network.parameters(),lr = lr , betas = (beta1,beta2),weight_decay=weight_decay)
+    
+    elif optimizer == 'rmsprop':
+        opt = optim.RMSprop(network.parameters(),lr = lr ,weight_decay=weight_decay)
+    
+    return opt
+
+
+def preprocess_data(data_dir = 'data' , img_size = 224 ):
+    
+    # path to the data folder from the current directory
+    data_dir = data_dir
+
+    mean = np.array([0.5, 0.5, 0.5])
+    std = np.array([0.25, 0.25, 0.25])
+
+    #size of image to be resized to
+    img_size = img_size
+
+    #transformation to be performed on training an test images
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.Resize((img_size,img_size)),
+            #transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize((img_size,img_size)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+    }
+
+    # creating datasets dictionary from train and validation folders in data directory
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
+                                            data_transforms[x])
+                    for x in ['train', 'val']}
+
+    # splitting train dataset into train and validation dataset with random split of size [0.8,0.2]
+    train_size = int(0.8 * len(image_datasets['train']))
+    test_size = len(image_datasets['train']) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(image_datasets['train'], [train_size, test_size])
+
+    test_dataset =  image_datasets['val']
+
+    # class names 
+    class_names = image_datasets['train'].classes
+    
+    return train_dataset,val_dataset,test_dataset,class_names
+
