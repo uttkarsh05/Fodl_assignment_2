@@ -298,67 +298,35 @@ class Model(nn.Module):
         
 def get_loss(loss):
     if loss.lower() =='crossentropy':
-        loss_function = nn.CrossEntropyLoss().to(device)
+        loss_function = nn.CrossEntropyLoss()
     elif loss.lower()=='mse':
         loss_function = nn.MSELoss()
     
     return loss_function
         
-def get_optimizer(optimizer,lr,momentum,beta,beta1,beta2,network):
+def get_optimizer(optimizer,lr,momentum,beta,beta1,beta2,network,weight_decay):
     optimizer = optimizer.lower()
     
     if optimizer=='sgd':
-        opt = optim.SGD(network.parameters(),lr = lr )
+        opt = optim.SGD(network.parameters(),lr = lr ,weight_decay=weight_decay)
     
     elif optimizer=='momentum':
-        opt = optim.SGD(network.parameters(),lr = lr,momentum = momentum )
+        opt = optim.SGD(network.parameters(),lr = lr,momentum = momentum ,weight_decay=weight_decay)
     
     elif optimizer=='nesterov':
-        opt = optim.SGD(network.parameters(),lr = lr , momentum = beta)
+        opt = optim.SGD(network.parameters(),lr = lr , momentum = beta,weight_decay=weight_decay)
     
     elif optimizer == 'adam':
-        opt = optim.Adam(network.parameters(),lr = lr , betas = (beta1,beta2))
+        opt = optim.Adam(network.parameters(),lr = lr , betas = (beta1,beta2),weight_decay=weight_decay)
     
     elif optimizer == 'nadam':
-        opt = optim.NAdam(network.parameters(),lr = lr , betas = (beta1,beta2))
+        opt = optim.NAdam(network.parameters(),lr = lr , betas = (beta1,beta2),weight_decay=weight_decay)
     
     elif optimizer == 'rmsprop':
-        opt = optim.RMSprop(network.parameters(),lr = lr )
+        opt = optim.RMSprop(network.parameters(),lr = lr ,weight_decay=weight_decay)
     
     return opt
 
-'''input_size  = default_config.input_size
-    
-input_dim = default_config.input_dim
-out_dim  = default_config.out_dim
-
-activation = default_config.activation
-
-filter_sizes = default_config.filter_sizes
-feature_maps = default_config.feature_maps
-
-padding = default_config.padding
-stride  = default_config.stride
-
-dropout = default_config.dropout
-max_pool = default_config.max_pool
-
-
-
-hidden_layers = default_config.hidden_layers
-hidden_size = default_config.hidden_size
-
-model = Model(input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding,stride,max_pool ,dropout)
-
-network = model.network
-network = network.to(device)
-network[0].weight.shape
-
-
-
-network(X_val[:100].view(100,3,128,128)).argmax(1)
-
-accuracy_score(val_labels[:100],network(X_val[:100].view(100,3,128,128)).argmax(1).cpu().numpy())'''
 
 def train(config = default_config):
     
