@@ -1,33 +1,18 @@
 import torch
 import torch.nn as nn
-import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import pytorch_lightning as pl
 import argparse
-import random
-import imageio
-import cv2
 import numpy as np
 import os 
-from sklearn.model_selection import train_test_split
 import wandb
 import torch.optim as optim
 from torch.utils.data import DataLoader,TensorDataset
-from sklearn.metrics import accuracy_score
+from torchvision import models,datasets,transforms
+import copy
+import time
+from types import SimpleNamespace
 
-class SimpleNamespace:
-    def __init__(self, /, **kwargs):
-        self.__dict__.update(kwargs)
-
-    def __repr__(self):
-        items = (f"{k}={v!r}" for k, v in self.__dict__.items())
-        return "{}({})".format(type(self).__name__, ", ".join(items))
-
-    def __eq__(self, other):
-        if isinstance(self, SimpleNamespace) and isinstance(other, SimpleNamespace):
-           return self.__dict__ == other.__dict__
-        return NotImplemented
 
 default_config = SimpleNamespace(
 	wandb_project = 'sweeps',
