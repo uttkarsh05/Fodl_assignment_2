@@ -85,3 +85,6 @@ def test(config = default_config,mod=None):
     
     print('Prediction complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     
+if __name__ =='__main__':
+    
+    test()
