@@ -395,13 +395,24 @@ def train(config = default_config):
     beta1 = config.beta1
     beta2 = config.beta2
     
-    optimizer = get_optimizer(config.optimizer,lr,momentum,beta,beta1,beta2,network)
+    weight_decay = config.weight_decay
+    
+    optimizer = get_optimizer(config.optimizer,lr,momentum,beta,beta1,beta2,network,weight_decay)
     
     epochs = config.epochs
     
     batch_size = config.batch_size 
     
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    
+    best_model_wts = copy.deepcopy(network.state_dict())
+    best_acc = 0.0
+    
+    patience = config.patience
+    min_delta = config.min_delta
+    early_stopper = EarlyStopper(patience=patience,min_delta=min_delta)
+    
+    start = time.time()
     
     for i in range(epochs):
         j = 0
