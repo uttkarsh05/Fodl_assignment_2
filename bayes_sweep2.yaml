@@ -1,0 +1,38 @@
+program: transfer_learning.py
+
+method: bayes
+
+project: CNN
+
+entity: uttakarsh05
+
+metric: 
+  name: val_accuracy 
+  goal: maximize
+
+parameters:
+
+  optimizer:
+    values: ['adam','nadam','momentum']
+
+  batch_size:
+    values: [32,64]
+
+  learning_rate:
+    values: [1e-4,1e-3,1e-2]
+  
+  model:
+    values: [ 'resnet50','resnet34','resnet101']
+
+
+  epochs:
+    values: [5]
+
+
+  wandb_project:
+    values: ['CNN_part_b']
+
+  wandb_entity:
+    values: ['uttakarsh05']
+
+    
