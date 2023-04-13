@@ -1,4 +1,7 @@
-from train import train
+from train import train as train_a
+from train import default_config as config_a
+from transfer_learning import default_config as config_b
+from transfer_learning import train as train_b
 import torch
 from torchsummary import summary
 import torchvision.transforms as transforms
@@ -9,12 +12,21 @@ import os
 import numpy as np
 from types import SimpleNamespace
 import time
+import argparse
 
 default_config = SimpleNamespace(
     data_dir = 'data',
     device = 'mps',
-    
-)
+    part = 'a',
+    )
+def parse_args():
+	argparser = argparse.ArgumentParser(description = 'Processing Hyperparameters')
+	argparser.add_argument('-p','--part',type=str , default=default_config.part, help='part a or b to test the best model from there')
+	argparser.add_argument('-d_dir','--data_dir',type=str , default=default_config.data_dir, help='path to the data folder')
+	argparser.add_argument('-dev','--device',type=str , default=default_config.device, help='device used for training the model') 
+	args = argparser.parse_args()
+	vars(default_config).update(vars(args))
+	return 
 
 def preprocess(data_dir = 'data',img_size = 128):
     data_dir = data_dir
@@ -48,18 +60,21 @@ def preprocess(data_dir = 'data',img_size = 128):
     
     return test_dataset,class_names
 
-def test(config = default_config,mod=None):
+def test(config = default_config):
     
     device = config.device
-    img_size = 128
+    
+    if config.part == 'a':
+        model = train_a()
+        model = model.to(device)
+        img_size = config_a.input_size
+    else:
+        model = train_b()
+        model = model.to(device)
+        img_size = config_b.input_size
+        
     test_dataset , class_names = preprocess(data_dir=config.data_dir,img_size=img_size)
     test_dataloader = DataLoader(test_dataset,batch_size=100)
-    if mod is None:
-        model = train()
-        model = model.to(device)
-    else:
-        model = mod
-        model = model.to(device)
     
     
     test_accuracy = 0
@@ -86,5 +101,11 @@ def test(config = default_config,mod=None):
     print('Prediction complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     
 if __name__ =='__main__':
-    
+    parse_args()
     test()
+    
+    
+        
+        
+    
+    

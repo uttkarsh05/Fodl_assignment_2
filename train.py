@@ -156,6 +156,25 @@ class EarlyStopper:
     
 class Model(nn.Module):
     
+    """
+        A convolutional neural network model for image classification.
+        
+        Args:
+        - input_size (int): The height and width of the input image.
+        - input_dim (int): The number of channels in the input image.
+        - out_dim (int): The number of output classes.
+        - filter_sizes (list[int]): A list of filter sizes for each convolutional layer.
+        - feature_maps (list[int]): A list of the number of feature maps for each convolutional layer.
+        - activation (str): The type of activation function to use for hidden layers.
+        - hidden_layers (int): The number of hidden fully connected layers.
+        - hidden_size (list[int]): A list of the number of neurons in each hidden layer.
+        - padding (int): The amount of zero-padding to apply to the input image.
+        - stride (int): The stride of the convolutional filters.
+        - filter_orientation (str): The orientation of the convolutional filters. Can be "Half" or "Full".
+        - dropout (float): The dropout rate to use for hidden fully connected layers.
+        - batch_norm (bool): Whether to apply batch normalization after each convolutional and hidden fully connected layer.
+        """
+    
     def __init__(self,input_size,input_dim,out_dim,filter_sizes,feature_maps,activation,hidden_layers,hidden_size,padding = 0,stride = 1,filter_orientation = 'Half',dropout = 0,batch_norm = True):
         
         super().__init__()
@@ -185,14 +204,38 @@ class Model(nn.Module):
         self.network = self._create_network()
         
     def forward(self,X):
+        """
+        Forward pass through the model.
+        
+        Args:
+        - X (torch.Tensor): The input tensor.
+        
+        Returns:
+        - output (torch.Tensor): The output tensor.
+        """
         return self.network(X)
     
     def predict(self,X):
+        """
+        Predict the most likely class for each input in X.
+        
+        Args:
+        - X (torch.Tensor): The input tensor.
+        
+        Returns:
+        - y_hat (torch.Tensor): The predicted class labels.
+        """
         y_pred = self.network(X)
         y_hat = y_pred.argmax(1)
         return y_hat
            
     def _get_flatten_layer_size(self):
+        """
+        Helper function to calculate the size of the flattened layer after convolutional layers.
+        
+        Returns:
+        - N (int): The size of the flattened layer.
+        """
         
         N = self.input_size
         P = self.padding
@@ -215,6 +258,15 @@ class Model(nn.Module):
         return int(N)
        
     def _get_activation(self,activation):
+        """
+    Private method to return the activation function object based on the activation string.
+
+    Args:
+        activation (str): The string specifying the activation function.
+
+    Returns:
+        nn.Module: The activation function object.
+    """
         activation  = activation.lower()
         if activation =='relu':
             g = nn.ReLU()
@@ -243,6 +295,12 @@ class Model(nn.Module):
         return g
 
     def _create_network(self):
+        """
+    Private method to create the neural network architecture.
+
+    Returns:
+        nn.Sequential: The neural network model.
+    """
      
         network = []
         in_channels = self.input_dim

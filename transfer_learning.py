@@ -18,13 +18,13 @@ from types import SimpleNamespace
 
 
 default_config = SimpleNamespace(
-	wandb_project = 'sweeps',
+	wandb_project = 'CNN_part_b',
 	wandb_entity = 'uttakarsh05',
-    model = 'resnet18',
+    model = 'resnet50',
 	epochs = 5,
-	batch_size = 64,
+	batch_size = 32,
 	loss = 'crossentropy',
-	optimizer = 'adam',
+	optimizer = 'nadam',
 	learning_rate = 1e-3,
 	momentum = 0.9,
 	beta = 0.9,
@@ -161,9 +161,9 @@ def preprocess_data(data_dir = 'data' , img_size = 224 ):
 
 def train(config = default_config):
     
-    #run  = wandb.init(project = config.wandb_project , entity = config.wandb_entity,config = config )
+    run  = wandb.init(project = config.wandb_project , entity = config.wandb_entity,config = config )
     
-    #config = wandb.config
+    config = wandb.config
     
     device = torch.device(config.device)
     
@@ -182,8 +182,8 @@ def train(config = default_config):
     input_dim = config.input_dim
     out_dim  = config.out_dim
     
-    #name = '_lr_'+str(config.learning_rate)+'_o_'+str(config.optimizer)+'_bs_'+str(config.batch_size)+'_m_'+str(model)
-    #run.name = name
+    name = '_lr_'+str(config.learning_rate)+'_o_'+str(config.optimizer)+'_bs_'+str(config.batch_size)+'_m_'+str(model)
+    run.name = name
     
     for param in network.parameters():
         param.requires_grad = False
@@ -277,7 +277,7 @@ def train(config = default_config):
 
         print('epoch = ',i+1, ' training loss = ',np.round(train_loss,4),' training accuracy = ',np.round(train_accuracy,4)*100,' validation loss = ',np.round(val_loss,4),' val accuracy = ', np.round(val_accuracy,4)*100)
         
-        #wandb.log({'epochs':i+1,'training_loss':np.round(train_loss,4),'training_accuracy':np.round(train_accuracy,4)*100,'validation_loss':np.round(val_loss,4),'val_accuracy':np.round(val_accuracy,4)*100})
+        wandb.log({'epochs':i+1,'training_loss':np.round(train_loss,4),'training_accuracy':np.round(train_accuracy,4)*100,'validation_loss':np.round(val_loss,4),'val_accuracy':np.round(val_accuracy,4)*100})
 
         if early_stopper.early_stop(val_accuracy):
             break
@@ -299,3 +299,6 @@ def train(config = default_config):
 if __name__ == '__main__':
     parse_args()
     model = train(default_config)
+
+
+ 
