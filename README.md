@@ -90,7 +90,8 @@
 
  * `train()`: This function is the entry point of the program and contains the main logic for training and evaluating the model. It loads the dataset using the torchvision.datasets module, preprocesses the data using the torchvision.transforms module, creates the data loader using the DataLoader class from the torch.utils.data module, loads the pre-trained CNN model using the torchvision.models module, replaces the last fully connected layer with a new layer that has the number of output classes specified in the hyperparameters, and trains the model using the specified optimizer and loss function. It also logs the training and validation accuracy using the wandb library, and saves the best model based on the validation accuracy using the torch.save function. 
    
-      
-       
+`test.py`
+ 
+ This is the script which can be used to train the best model from either `transfer_learning.py` or `train.py` on test dataset
       
   
