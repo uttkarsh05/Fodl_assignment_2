@@ -93,5 +93,22 @@
 `test.py`
  
  This is the script which can be used to train the best model from either `transfer_learning.py` or `train.py` on test dataset
+ 
+ The given code consists of three functions - `preprocess()`, `test()`, and `parse_args()`, and a few import statements.
+
+   * `preprocess(data_dir='data', img_size=128)`:
+   
+     This function is used to preprocess the input data. It takes two parameters as input - `data_dir`, which is the path to the data folder, and img_size,      which is the size of the image to be resized. It returns the preprocessed test dataset and the class names of the images in the dataset.
+
+   * `test(config=default_config)`:
+   
+      This function is used to test the accuracy of the trained model on the test dataset. It takes one parameter as input - `config`, which is the    configuration of the model to be tested. If the `part` parameter in the `config` object is set to 'a', the `train_a()` function will be used to load the model. Otherwise, the `train_b()` function will be used. The `preprocess()` function is called to preprocess the test dataset. The accuracy of the model on the test dataset is computed and printed to the console.
+
+   * `parse_args()`:
+    This function is used to parse the arguments passed to the script. It uses the `argparse` library to parse the command-line arguments. The `part`, `data_dir`, and `device` arguments can be passed to the script.
+
+   * Import Statements:
+    
+     The `train` function is imported from the `train` file. The `default_config` object is imported from the `train` and `transfer_learning` modules. The torch, torchsummary, torchvision, wandb, os, and numpy modules are imported for various tasks in the script.
       
   
