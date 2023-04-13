@@ -1,4 +1,4 @@
-# Fodl_assignment_2
+# Fodl assignment - 2
 
 ## Instructions :
 
