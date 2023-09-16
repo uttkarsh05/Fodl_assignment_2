@@ -1,5 +1,8 @@
 # iNaturalist Classifier
 
+## Report : 
+https://api.wandb.ai/links/uttakarsh05/i4xf9v8m
+
 ## Instructions :
 
 * Clone the repository using  `git clone uttkarsh05/Fodl_assignment_2`
