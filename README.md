@@ -6,7 +6,8 @@
 
 * Create a data folder in the same directory as repository
 
-* Add the inaturalist train and val dataset in that data folder ( note : there should be two folders in the data directory named train and val )
+* Add the inaturalist train and val dataset in that data folder (note : there should be two folders in the data directory named train and val)
+  download the dataset from here : https://storage.googleapis.com/wandb_datasets/nature_12K.zip
 
 * To test the best custom model on the test dataset (for full training of a cnn) run on the terminal : ` python test.py --part a `
 
