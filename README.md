@@ -1,4 +1,4 @@
-# Fodl assignment - 2
+# iNaturalist Classifier
 
 ## Instructions :
 
